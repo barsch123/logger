@@ -1,6 +1,7 @@
 {
     "name": "gottvergessen/activity",
-    "description": "This is my package logger",
+   "description": "A lightweight Laravel activity logging package that tracks model events with automatic observers.",
+
     "keywords": [
         "Gottvergessen",
         "laravel",

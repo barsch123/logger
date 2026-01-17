@@ -14,7 +14,7 @@ class TestCase extends Orchestra
         parent::setUp();
 
         Factory::guessFactoryNamesUsing(
-            fn (string $modelName) => 'Gottvergessen\\Logger\\Database\\Factories\\'.class_basename($modelName).'Factory'
+            fn(string $modelName) => 'Gottvergessen\\Logger\\Database\\Factories\\' . class_basename($modelName) . 'Factory'
         );
     }
 
@@ -24,6 +24,13 @@ class TestCase extends Orchestra
             ActivityServiceProvider::class,
         ];
     }
+
+    protected function defineDatabaseMigrations(): void
+    {
+        $this->loadMigrationsFrom(__DIR__ . '/database/migrations');
+    }
+
+
 
     public function getEnvironmentSetUp($app)
     {
