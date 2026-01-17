@@ -1,5 +1,5 @@
 {
-    "name": "gott/logger",
+    "name": "gottvergessen/activity",
     "description": "This is my package logger",
     "keywords": [
         "Gottvergessen",
@@ -29,13 +29,13 @@
     },
     "autoload": {
         "psr-4": {
-            "Gottvergessen\\Logger\\": "src/",
-            "Gottvergessen\\Logger\\Database\\Factories\\": "database/factories/"
+            "Gottvergessen\\Activity\\": "src/",
+            "Gottvergessen\\Activity\\Database\\Factories\\": "database/factories/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Gottvergessen\\Logger\\Tests\\": "tests/",
+            "Gottvergessen\\Activity\\Tests\\": "tests/",
             "Workbench\\App\\": "workbench/app/"
         }
     },
@@ -57,10 +57,10 @@
     "extra": {
         "laravel": {
             "providers": [
-                "Gottvergessen\\Logger\\LoggerServiceProvider"
+                "Gottvergessen\\Activity\\ActivityServiceProvider"
             ],
             "aliases": {
-                "Logger": "Gottvergessen\\Logger\\Facades\\Logger"
+                "Activity": "Gottvergessen\\Activity\\Facades\\Activity"
             }
         }
     },

@@ -1,7 +1,6 @@
 <?php
 
-namespace Gottvergessen\Logger\Support;
-
+namespace Gottvergessen\Activity\Support;
 
 class ActivityContext
 {
@@ -13,6 +12,31 @@ class ActivityContext
     protected static ?int $causerId = null;
     protected static array $meta = [];
 
+    protected static bool $disabled = false;
+
+    public static function enabled():bool{
+        return config('activity.enabled', true) && ! static::$disabled;
+    }
+    public static function disable(): void
+    {
+        static::$disabled = true;
+    }
+
+    public static function enable(): void
+    {
+        static::$disabled = false;
+    }
+
+    public static function withoutLogging(callable $callback)
+    {
+        static::disable();
+
+        try {
+            return $callback();
+        } finally {
+            static::enable();
+        }
+    }
     public static function setRequestId(string $id): void
     {
         static::$requestId = $id;

@@ -1,13 +1,12 @@
 <?php
 
-namespace Gottvergessen\Logger\Tests;
+namespace Gottvergessen\Activity\Tests;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Orchestra\Testbench\TestCase as Orchestra;
-use Gottvergessen\Logger\LoggerServiceProvider;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
+use Gottvergessen\Activity\ActivityServiceProvider;
+
 
 class TestCase extends Orchestra
 {
@@ -24,7 +23,7 @@ class TestCase extends Orchestra
     protected function getPackageProviders($app)
     {
         return [
-            LoggerServiceProvider::class,
+            ActivityServiceProvider::class,
         ];
     }
 

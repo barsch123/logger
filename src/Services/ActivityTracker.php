@@ -1,12 +1,12 @@
 <?php
 
-namespace Gottvergessen\Logger\Services;
+namespace Gottvergessen\Activity\Services;
 
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\Eloquent\Model;
-use Gottvergessen\Logger\Models\Activity;
-use Gottvergessen\Logger\Support\ActivityContext;
+use Gottvergessen\Activity\Models\Activity;
+use Gottvergessen\Activity\Support\ActivityContext;
 
 class ActivityTracker
 {
@@ -83,7 +83,7 @@ class ActivityTracker
             return (string) $model->activityLog();
         }
 
-        return (string) config('logger.default_log', 'default');
+        return (string) config('activity.default_log', 'default');
     }
 
     protected static function hasMeaningfulChanges(Model $model): bool
@@ -104,7 +104,7 @@ class ActivityTracker
 
     protected static function shouldTrack(Model $model, string $event): bool
     {
-        $events = config('logger.events', []);
+        $events = config('activity.events', []);
 
         $modelKey = get_class($model);
 
@@ -135,7 +135,7 @@ class ActivityTracker
     {
         $ignored = method_exists($model, 'getIgnoredAttributes')
             ? $model->getIgnoredAttributes()
-            : config('logger.ignore_attributes', []);
+            : config('activity.ignore_attributes', []);
 
         return collect($model->getChanges())
             ->reject(fn($_, $key) => in_array($key, $ignored, true))
@@ -170,8 +170,8 @@ class ActivityTracker
 
     protected static function explicitBatch(): ?string
     {
-        return app()->bound('logger.batch')
-            ? app('logger.batch')
+        return app()->bound('activity.batch')
+            ? app('activity.batch')
             : null;
     }
     protected static function requestBatch(): ?string
@@ -181,7 +181,7 @@ class ActivityTracker
 
     protected static function autoBatch(): ?string
     {
-        return config('logger.auto_batch', false)
+        return config('activity.auto_batch', false)
             ? (string) Str::uuid()
             : null;
     }

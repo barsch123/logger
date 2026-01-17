@@ -1,9 +1,9 @@
 <?php
 
-namespace Gottvergessen\Logger\Traits;
+namespace Gottvergessen\Activity\Traits;
 
-use Gottvergessen\Logger\Observers\TrackableObserver;
-use Gottvergessen\Logger\Models\Activity;
+use Gottvergessen\Activity\Observers\TrackableObserver;
+use Gottvergessen\Activity\Models\Activity;
 
 trait TracksModelActivity
 {
@@ -13,8 +13,7 @@ trait TracksModelActivity
             return;
         }
 
-        // Allow global disable
-        if (! config('logger.enabled', true)) {
+        if (! config('activity.enabled', true)) {
             return;
         }
 

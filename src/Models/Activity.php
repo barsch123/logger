@@ -1,6 +1,6 @@
 <?php
 
-namespace Gottvergessen\Logger\Models;
+namespace Gottvergessen\Activity\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;

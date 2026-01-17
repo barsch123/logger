@@ -1,11 +1,11 @@
 <?php
 
-namespace Gottvergessen\Logger\Traits;
+namespace Gottvergessen\Activity\Traits;
 
-use Gottvergessen\Logger\Models\Activity;
+use Gottvergessen\Activity\Models\Activity;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
-trait HasActivities
+trait InteractsWithActivity
 {
     public function activities(): MorphMany
     {

@@ -1,18 +1,18 @@
 <?php
 
-namespace Gottvergessen\Logger;
+namespace Gottvergessen\Activity;
 
 use Illuminate\Support\Str;
 
-class Logger {
+class Activity {
     public static function batch(callable $callback): mixed
     {
-        app()->instance('logger.batch', (string) Str::uuid());
+        app()->instance('activity.batch', (string) Str::uuid());
 
         try {
             return $callback();
         } finally {
-            app()->forgetInstance('logger.batch');
+            app()->forgetInstance('activity.batch');
         }
     }
 }

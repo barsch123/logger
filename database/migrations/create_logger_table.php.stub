@@ -10,41 +10,18 @@ return new class extends Migration
     {
         Schema::create('activity_logs', function (Blueprint $table) {
             $table->id();
-
-            /**
-            * WHAT happened
-            */
-            $table->string('event', 32);                 // created | updated | deleted | restored
-            $table->string('action', 64)->nullable();    // optional semantic action (approved, assigned, paid)
-            $table->string('log', 64)->default('default'); // grouping / channel
-            $table->text('description')->nullable();     // human-readable sentence
-
-            /**
-            * SUBJECT (model being acted on)
-            */
-            $table->string('subject_type');              // App\Models\Order
-            $table->unsignedBigInteger('subject_id');    // 123
-
-            /**
-            * ACTOR (who caused it)
-            */
-            $table->string('causer_type')->nullable();   // App\Models\User | system | job
+            $table->string('event', 32);                 
+            $table->string('action', 64)->nullable();
+            $table->string('log', 64)->default('default'); 
+            $table->text('description')->nullable();
+            $table->string('subject_type');
+            $table->unsignedBigInteger('subject_id');
+            $table->string('causer_type')->nullable();
             $table->unsignedBigInteger('causer_id')->nullable();
-
-            /**
-            * CONTEXT / METADATA
-            */
-            $table->json('properties')->nullable();      // before/after values
-            $table->json('meta')->nullable();            // ip, ua, route, request id
-
-            /**
-            * SYSTEM
-            */
-            $table->string('origin', 32)->nullable();    // web | api | console | queue
-            $table->string('batch_id', 36)->nullable();  // UUID for grouped actions
-
+            $table->json('properties')->nullable();
+            $table->json('meta')->nullable();
+            $table->string('batch_id', 36)->nullable();
             $table->timestamps();
-
             $table->index(['subject_type', 'subject_id']);
             $table->index(['causer_type', 'causer_id']);
             $table->index(['event', 'created_at']);
@@ -53,6 +30,6 @@ return new class extends Migration
     }
 
     public function down(){
-        Schema::dropIfExists(config('logger.table'));
+        Schema::dropIfExists('activity_logs');
     }
 };

@@ -1,9 +1,10 @@
 <?php
 
-namespace Gottvergessen\Logger\Observers;
+namespace Gottvergessen\Activity\Observers;
 
 use Illuminate\Database\Eloquent\Model;
-use Gottvergessen\Logger\Services\ActivityTracker;
+use Gottvergessen\Activity\Services\ActivityTracker;
+use Gottvergessen\Activity\Support\ActivityContext;
 
 class TrackableObserver
 {
@@ -24,6 +25,9 @@ class TrackableObserver
 
     protected function track(Model $model, string $event): void
     {
+        if (! ActivityContext::enabled()) {
+            return;
+        }
         if (! method_exists($model, 'shouldTrackEvent')) {
             return;
         }
