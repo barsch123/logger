@@ -3,17 +3,21 @@
 namespace Gottvergessen\Logger\Tests;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Orchestra\Testbench\TestCase as Orchestra;
 use Gottvergessen\Logger\LoggerServiceProvider;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 class TestCase extends Orchestra
 {
+    use RefreshDatabase;
     protected function setUp(): void
     {
         parent::setUp();
 
         Factory::guessFactoryNamesUsing(
-            fn (string $modelName) => 'Gottvergessen\\Logger\\Database\\Factories\\'.class_basename($modelName).'Factory'
+            fn(string $modelName) => 'Gottvergessen\\Logger\\Database\\Factories\\' . class_basename($modelName) . 'Factory'
         );
     }
 
@@ -33,5 +37,11 @@ class TestCase extends Orchestra
             (include $migration->getRealPath())->up();
          }
          */
+    }
+    protected function defineDatabaseMigrations()
+    {
+        $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
+
+        $this->loadMigrationsFrom(__DIR__.'/database/migrations');
     }
 }
