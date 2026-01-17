@@ -12,10 +12,18 @@ class ActivityTracker
 {
     public static function track(Model $model, string $event, ?array $attributes = null): void
     {
+        if ($event === 'updated' && ! static::hasMeaningfulChanges($model)) {
+            return;
+        }
+
         if (! static::shouldTrack($model, $event)) {
             return;
         }
         $user = Auth::user();
+
+        if (method_exists($model, 'shouldTrackEvent') && ! $model->shouldTrackEvent($event)) {
+            return;
+        }
 
         if ($user) {
             ActivityContext::setCauser(
@@ -23,26 +31,23 @@ class ActivityTracker
                 $user->getAuthIdentifier(),
             );
         }
+        ActivityContext::addMeta([
+            'ip' => request()->ip(),
+            'user_agent' => request()->userAgent(),
+            'method' => request()->method(),
+            'host' => request()->httpHost(),
+        ]);
         Activity::create([
             'event'        => $event,
             'action'       => static::action($model, $event),
             'log'          => static::log($model),
             'description'  => static::description($model, $event),
-
             'subject_type' => get_class($model),
             'subject_id'   => $model->getKey(),
-
             'causer_type'  => ActivityContext::causerType(),
             'causer_id'    => ActivityContext::causerId(),
             'properties'   => static::resolveProperties($model, $event, $attributes),
-            'meta'         => ActivityContext::addMeta([
-                'ip' => request()->ip(),
-                'user_agent' => request()->userAgent(),
-                'method' => request()->method(),
-                'host' => request()->httpHost(),
-            ]),
-
-            'origin'       => ActivityContext::origin(),
+            'meta'         => ActivityContext::meta(),
             'batch_id'     => static::batchId(),
         ]);
     }
@@ -61,13 +66,15 @@ class ActivityTracker
         return null;
     }
 
-    protected static function properties(
-        Model $model,
-        string $event,
-        ?array $attributes
-    ): array {
-        return static::resolveProperties($model, $event, $attributes);
-    }
+    // protected static function properties(
+    //     Model $model,
+    //     string $event,
+    //     ?array $attributes
+    // ): array {
+    //     return static::resolveProperties($model, $event, $attributes);
+    // }
+
+
 
 
     protected static function log(Model $model): string
@@ -78,6 +85,19 @@ class ActivityTracker
 
         return (string) config('logger.default_log', 'default');
     }
+
+    protected static function hasMeaningfulChanges(Model $model): bool
+    {
+        $ignored = method_exists($model, 'getIgnoredAttributes')
+            ? $model->getIgnoredAttributes()
+            : [];
+
+        return collect($model->getChanges())
+            ->reject(fn($_, $key) => in_array($key, $ignored, true))
+            ->isNotEmpty();
+    }
+
+
 
 
 
@@ -113,8 +133,12 @@ class ActivityTracker
 
     protected static function resolveChanges(Model $model): array
     {
+        $ignored = method_exists($model, 'getIgnoredAttributes')
+            ? $model->getIgnoredAttributes()
+            : config('logger.ignore_attributes', []);
+
         return collect($model->getChanges())
-            ->reject(fn($_, $key) => in_array($key, config('logger.ignore', [])))
+            ->reject(fn($_, $key) => in_array($key, $ignored, true))
             ->map(fn($value, $key) => [
                 'old' => $model->getOriginal($key),
                 'new' => $value,
@@ -122,14 +146,20 @@ class ActivityTracker
             ->toArray();
     }
 
+
+
     /* -------------------------------- */
     /* Metadata                         */
     /* -------------------------------- */
-
     protected static function description(Model $model, string $event): string
     {
-        return Str::headline(class_basename($model)) . " {$event}";
+        if (method_exists($model, 'activityDescription')) {
+            return $model->activityDescription($event);
+        }
+
+        return class_basename($model) . ' ' . $event;
     }
+
 
     protected static function batchId(): ?string
     {

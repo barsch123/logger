@@ -55,15 +55,4 @@ trait TracksModelActivity
         ));
     }
 
-    public function shouldUseDiff(): bool
-    {
-        return property_exists($this, 'trackDiffs')
-            ? (bool) $this->trackDiffs
-            : config('logger.use_diffs', true);
-    }
-
-    public function getTrackingDescription(string $event): ?string
-    {
-        return null;
-    }
 }

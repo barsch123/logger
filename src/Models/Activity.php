@@ -19,7 +19,6 @@ class Activity extends Model
         'causer_id',
         'properties',
         'meta',
-        'origin',
         'batch_id'
     ];
 

@@ -8,7 +8,6 @@ class ActivityContext
     protected static ?string $requestId = null;
 
     protected static ?string $batchId = null;
-    protected static ?string $origin = null;
 
     protected static ?string $causerType = null;
     protected static ?int $causerId = null;
@@ -27,11 +26,6 @@ class ActivityContext
     public static function setOrigin(string $origin): void
     {
         static::$origin = $origin;
-    }
-
-    public static function origin(): ?string
-    {
-        return static::$origin;
     }
 
     public static function addMeta(array $meta): array

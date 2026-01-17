@@ -1,19 +1,7 @@
-# This is my package logger
+# Logger
 
-[![Latest Version on Packagist](https://img.shields.io/packagist/v/gott/logger.svg?style=flat-square)](https://packagist.org/packages/gott/logger)
-[![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/gott/logger/run-tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/gott/logger/actions?query=workflow%3Arun-tests+branch%3Amain)
-[![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/gott/logger/fix-php-code-style-issues.yml?branch=main&label=code%20style&style=flat-square)](https://github.com/gott/logger/actions?query=workflow%3A"Fix+PHP+code+style+issues"+branch%3Amain)
-[![Total Downloads](https://img.shields.io/packagist/dt/gott/logger.svg?style=flat-square)](https://packagist.org/packages/gott/logger)
+Logger is a lightweight, opinionated activity logging package for Laravel that automatically tracks model changes and records who did what, to which model, and when — without polluting your domain logic.
 
-This is where your description should go. Limit it to a paragraph or two. Consider adding a small example.
-
-## Support us
-
-[<img src="https://github-ads.s3.eu-central-1.amazonaws.com/Logger.jpg?t=1" width="419px" />](https://spatie.be/github-ad-click/Logger)
-
-We invest a lot of resources into creating [best in class open source packages](https://spatie.be/open-source). You can support us by [buying one of our paid products](https://spatie.be/open-source/support-us).
-
-We highly appreciate you sending us a postcard from your hometown, mentioning which of our package(s) you are using. You'll find our address on [our contact page](https://spatie.be/about-us). We publish all received postcards on [our virtual postcard wall](https://spatie.be/open-source/postcards).
 
 ## Installation
 
@@ -26,45 +14,112 @@ composer require gott/logger
 You can publish and run the migrations with:
 
 ```bash
-php artisan vendor:publish --tag="logger-migrations"
-php artisan migrate
+php artisan logger:install
 ```
 
-You can publish the config file with:
 
-```bash
-php artisan vendor:publish --tag="logger-config"
-```
-
-This is the contents of the published config file:
+### config/logger.php
 
 ```php
-return [
-];
+    return [
+        'enabled' => env('LOGGER_ENABLED', true),
+
+        'table' => 'activity_logs',
+
+        'default_log' => env('LOGGER_DEFAULT_LOG', 'default'),
+
+        'origin' => env('LOGGER_ORIGIN', 'web'),
+
+        'events' => [
+            'created',
+            'updated',
+            'deleted',
+            'restored',
+        ],
+
+        'ignore_attributes' => [
+            'created_at',
+            'updated_at',
+            'deleted_at',
+            'remember_token',
+        ],
+
+        'use_diffs' => true,
+
+        'driver' => 'database',
+    ];
+
 ```
 
-Optionally, you can publish the views using
-
-```bash
-php artisan vendor:publish --tag="logger-views"
-```
-
-## Usage
+## Basic usage
 
 ```php
-$logger = new Gottvergessen\Logger();
-echo $logger->echoPhrase('Hello, Gottvergessen!');
+use Gottvergessen\Logger\Traits\TracksModelActivity;
+
+class User extends Authenticatable
+{
+    use TracksModelActivity;
+
+}
 ```
 
-## Testing
+## Ignore Specific Fields per Model
+```php
+use Gottvergessen\Logger\Traits\TracksModelActivity;
 
-```bash
-composer test
+class User extends Authenticatable
+{
+    use TracksModelActivity;
+
+    protected array $ignoredAttributes = [
+        'password',
+        'remember_token',
+    ];
+
+    /*
+    *  Changes to the listed attributes will not appear in the activity properties
+    *  If only ignored attributes change, no activity log entry is created
+    */
+}
+```
+## Per-Model Event Control
+```php
+use Gottvergessen\Logger\Traits\TracksModelActivity;
+
+class User extends Authenticatable
+{
+    use TracksModelActivity;
+
+    protected array $trackEvents = [
+        'created',
+        'updated',
+    ];
+
+    /*
+    *  Limit which events are tracked:
+    *  
+    */
+}
+```
+### Custom description per Model
+```php
+class Appointment extends Model
+{
+    use TracksModelActivity;
+
+    public function activityDescription(string $event): string
+    {
+        return match ($event) {
+            'created' => "Appointment scheduled for {$this->scheduled_at}",
+            'updated' => "Appointment updated for {$this->scheduled_at}",
+            'deleted' => "Appointment cancelled",
+            default   => "Appointment {$event}",
+        };
+    }
+}
 ```
 
-## Changelog
 
-Please see [CHANGELOG](CHANGELOG.md) for more information on what has changed recently.
 
 ## Contributing
 
