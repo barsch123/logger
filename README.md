@@ -21,10 +21,34 @@ You can install the package via composer:
 composer require gottvergessen/activity
 ```
 
-You can publish and run the migrations with:
+### Publish Assets
+
+Publish the configuration file and migrations:
 
 ```bash
 php artisan activity:install
+```
+
+This will create:
+- `config/activity.php` - Configuration file
+- `database/migrations/[timestamp]_create_logger_table.php` - Database migration
+
+You can also publish assets separately:
+
+```bash
+# Publish just the config file
+php artisan vendor:publish --provider="Gottvergessen\Activity\ActivityServiceProvider" --tag="config"
+
+# Publish just the migrations
+php artisan vendor:publish --provider="Gottvergessen\Activity\ActivityServiceProvider" --tag="migrations"
+```
+
+### Run Migrations
+
+After publishing, run the migrations to create the `activity_logs` table:
+
+```bash
+php artisan migrate
 ```
 
 ### Pruning Old Logs

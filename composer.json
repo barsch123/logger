@@ -1,13 +1,14 @@
 {
     "name": "gottvergessen/activity",
-   "description": "A lightweight Laravel activity logging package that tracks model events with automatic observers.",
-
+    "description": "A lightweight Laravel activity logging package that tracks model events with automatic observers.",
     "keywords": [
-        "Gottvergessen",
         "laravel",
-        "logger"
+        "activity",
+        "logging",
+        "audit",
+        "tracking"
     ],
-    "homepage": "https://github.com/gott/logger",
+    "homepage": "https://github.com/barsch123/logger",
     "license": "MIT",
     "authors": [
         {
