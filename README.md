@@ -17,6 +17,27 @@ You can publish and run the migrations with:
 php artisan activity:install
 ```
 
+### Pruning Old Logs
+
+To keep your database clean, you can prune old activity logs:
+
+```bash
+# Keep only the last 90 days (default)
+php artisan activity:prune
+
+# Keep only the last 30 days
+php artisan activity:prune --days=30
+```
+
+You can schedule this in your `app/Console/Kernel.php`:
+
+```php
+protected function schedule(Schedule $schedule)
+{
+    $schedule->command('activity:prune --days=90')->daily();
+}
+```
+
 ### config/activity.php
 
 ```php
@@ -83,7 +104,7 @@ The `activity_logs` table tracks the following information:
 | Column | Type | Description |
 |--------|------|-------------|
 | id | ID | Primary key |
-| event | string | The event type (created, updated, deleted, restored) |
+| event | string | The event type (created, updated, deleted, restored). Events can be resolved into custom actions and descriptions|
 | action | string | Custom semantic action defined by the model (optional) |
 | log | string | Log category for grouping activities |
 | description | string | Description of the activity (optional) |
@@ -170,6 +191,25 @@ class Appointment extends Model
     public function activityAction(string $event): string
     {
         return match ($event) {
+            'created' => 'blog created',
+            'updated' => 'blog updated',
+            'deleted' => 'cancelled',
+        };
+    }
+}
+```
+### Custom Description per Model
+
+```php
+use Gottvergessen\Activity\Traits\TracksModelActivity;
+
+class Appointment extends Model
+{
+    use TracksModelActivity;
+
+    public function activityDescription(string $event): string
+    {
+        return match ($event) {
             'created' => "Appointment was scheduled for {$this->scheduled_at}",
             'updated' => "Appointment has been updated to {$this->new_appointment_date}",
             default   => $event,
@@ -177,10 +217,8 @@ class Appointment extends Model
     }
 }
 ```
-
 ### Batch Operations
 
-Feature not yet Implement but it will be:
 Group multiple model changes under a single batch ID:
 
 ```php
@@ -193,20 +231,51 @@ Activity::batch(function () {
 });
 ```
 
+### Temporarily Disable Logging
 
+You can temporarily disable activity logging when needed:
 
-## Contributing
+```php
+use Gottvergessen\Activity\Support\ActivityContext;
 
-Please see [CONTRIBUTING](CONTRIBUTING.md) for details.
+ActivityContext::withoutLogging(function () {
+    // These changes won't be logged
+    User::create(['name' => 'John']);
+    $user->update(['email' => 'john@example.com']);
+});
 
-## Security Vulnerabilities
+// Or manually control logging
+ActivityContext::disable();
+User::create(['name' => 'Jane']); // Not logged
+ActivityContext::enable();
+User::create(['name' => 'Bob']); // Logged
+```
 
-Please review [our security policy](../../security/policy) on how to report security vulnerabilities.
+### Query Scopes
 
-## Credits
+The Activity model provides convenient query scopes:
 
-- [Gottvergessen](https://github.com/Gott)
-- [All Contributors](../../contributors)
+```php
+use Gottvergessen\Activity\Models\Activity;
+
+// Filter by event type
+Activity::forEvent('created')->get();
+
+// Filter by subject model
+Activity::forSubject($user)->get();
+
+// Filter by causer
+Activity::causedBy($admin)->get();
+
+// Filter by batch
+Activity::inBatch($batchId)->get();
+
+// Filter by log category
+Activity::inLog('invoices')->get();
+
+// Filter by date range
+Activity::betweenDates($startDate, $endDate)->get();
+```
 
 ## License
 

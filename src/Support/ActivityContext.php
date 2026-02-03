@@ -14,9 +14,11 @@ class ActivityContext
 
     protected static bool $disabled = false;
 
-    public static function enabled():bool{
+    public static function enabled(): bool
+    {
         return config('activity.enabled', true) && ! static::$disabled;
     }
+
     public static function disable(): void
     {
         static::$disabled = true;
@@ -27,7 +29,7 @@ class ActivityContext
         static::$disabled = false;
     }
 
-    public static function withoutLogging(callable $callback)
+    public static function withoutLogging(callable $callback): mixed
     {
         static::disable();
 

@@ -10,53 +10,72 @@ use Gottvergessen\Activity\Support\ActivityContext;
 
 class ActivityTracker
 {
-    public static function track(Model $model, string $event, ?array $attributes = null): void
+    public function track(Model $model, string $event, ?array $attributes = null): void
     {
-        if ($event === 'updated' && ! static::hasMeaningfulChanges($model)) {
+        if ($event === 'updated' && ! $this->hasMeaningfulChanges($model)) {
             return;
         }
 
-        if (! static::shouldTrack($model, $event)) {
-            return;
-        }
-        $user = Auth::user();
-
-        if (method_exists($model, 'shouldTrackEvent') && ! $model->shouldTrackEvent($event)) {
+        if (! $this->shouldTrack($model, $event)) {
             return;
         }
 
-        if ($user) {
-            ActivityContext::setCauser(
-                get_class($user),
-                $user->getAuthIdentifier(),
-            );
+        // Capture causer (opt-in)
+        if (config('activity.capture_causer', true)) {
+            if ($user = Auth::user()) {
+                ActivityContext::setCauser(
+                    get_class($user),
+                    $user->getAuthIdentifier()
+                );
+            }
         }
-        ActivityContext::addMeta([
-            'ip' => request()->ip(),
-            'user_agent' => request()->userAgent(),
-            'method' => request()->method(),
-            'host' => request()->httpHost(),
-        ]);
+
+        // Capture request metadata (opt-in & safe)
+        if (
+            config('activity.capture_request_meta', false)
+            && app()->runningInConsole() === false
+            && request()
+        ) {
+            ActivityContext::addMeta(array_filter([
+                'method' => request()->method(),
+                'host'   => request()->httpHost(),
+            ]));
+        }
+
+        // Capture IP separately (explicit opt-in)
+        if (
+            config('activity.capture_ip', false)
+            && app()->runningInConsole() === false
+            && request()
+        ) {
+            ActivityContext::addMeta([
+                'ip' => request()->ip(),
+            ]);
+        }
+
         Activity::create([
             'event'        => $event,
-            'action'       => static::action($model, $event),
-            'log'          => static::log($model),
-            'description'  => static::description($model, $event),
+            'action'       => $this->action($model, $event),
+            'log'          => $this->log($model),
+            'description'  => $this->description($model, $event),
             'subject_type' => get_class($model),
             'subject_id'   => $model->getKey(),
             'causer_type'  => ActivityContext::causerType(),
             'causer_id'    => ActivityContext::causerId(),
-            'properties'   => static::resolveProperties($model, $event, $attributes),
+            'properties'   => $this->resolveProperties($model, $event, $attributes),
             'meta'         => ActivityContext::meta(),
-            'batch_id'     => static::batchId(),
+            'batch_id'     => $this->batchId(),
         ]);
+
+        ActivityContext::flush();
     }
+
 
     /* -------------------------------- */
     /* Core decisions                   */
     /* -------------------------------- */
 
-    protected static function action(Model $model, string $event): ?string
+    protected function action(Model $model, string $event): ?string
     {
         // Model-defined semantic action
         if (method_exists($model, 'activityAction')) {
@@ -66,18 +85,8 @@ class ActivityTracker
         return null;
     }
 
-    // protected static function properties(
-    //     Model $model,
-    //     string $event,
-    //     ?array $attributes
-    // ): array {
-    //     return static::resolveProperties($model, $event, $attributes);
-    // }
 
-
-
-
-    protected static function log(Model $model): string
+    protected function log(Model $model): string
     {
         if (method_exists($model, 'activityLog')) {
             return (string) $model->activityLog();
@@ -86,7 +95,7 @@ class ActivityTracker
         return (string) config('activity.default_log', 'default');
     }
 
-    protected static function hasMeaningfulChanges(Model $model): bool
+    protected function hasMeaningfulChanges(Model $model): bool
     {
         $ignored = method_exists($model, 'getIgnoredAttributes')
             ? $model->getIgnoredAttributes()
@@ -97,41 +106,35 @@ class ActivityTracker
             ->isNotEmpty();
     }
 
-
-
-
-
-
-    protected static function shouldTrack(Model $model, string $event): bool
+    protected function shouldTrack(Model $model, string $event): bool
     {
-        $events = config('activity.events', []);
-
-        $modelKey = get_class($model);
-
-        if (! isset($events[$modelKey])) {
-            return true;
+        // Check if model has custom event tracking
+        if (method_exists($model, 'shouldTrackEvent')) {
+            return $model->shouldTrackEvent($event);
         }
 
-        return in_array($event, $events[$modelKey], true);
+        return true;
     }
 
     /* -------------------------------- */
     /* Data builders                    */
     /* -------------------------------- */
 
-    protected static function resolveProperties(
-        Model $model,
-        string $event,
-        ?array $attributes
-    ): array {
+    protected function resolveProperties(Model $model, string $event, ?array $attributes): array
+    {
+        if (method_exists($model, 'activityProperties')) {
+            return $model->activityProperties($event, $attributes);
+        }
+
         return match ($event) {
             'created' => $attributes ?? $model->getAttributes(),
-            'updated' => static::resolveChanges($model),
+            'updated' => $this->resolveChanges($model),
             default   => [],
         };
     }
 
-    protected static function resolveChanges(Model $model): array
+
+    protected function resolveChanges(Model $model): array
     {
         $ignored = method_exists($model, 'getIgnoredAttributes')
             ? $model->getIgnoredAttributes()
@@ -147,11 +150,10 @@ class ActivityTracker
     }
 
 
-
     /* -------------------------------- */
     /* Metadata                         */
     /* -------------------------------- */
-    protected static function description(Model $model, string $event): string
+    protected function description(Model $model, string $event): string
     {
         if (method_exists($model, 'activityDescription')) {
             return $model->activityDescription($event);
@@ -161,25 +163,26 @@ class ActivityTracker
     }
 
 
-    protected static function batchId(): ?string
+    protected function batchId(): ?string
     {
-        return static::explicitBatch()
-            ?? static::requestBatch()
-            ?? static::autoBatch();
+        return $this->explicitBatch()
+            ?? $this->requestBatch()
+            ?? $this->autoBatch();
     }
 
-    protected static function explicitBatch(): ?string
+    protected function explicitBatch(): ?string
     {
         return app()->bound('activity.batch')
             ? app('activity.batch')
             : null;
     }
-    protected static function requestBatch(): ?string
+
+    protected function requestBatch(): ?string
     {
         return ActivityContext::batchId();
     }
 
-    protected static function autoBatch(): ?string
+    protected function autoBatch(): ?string
     {
         return config('activity.auto_batch', false)
             ? (string) Str::uuid()

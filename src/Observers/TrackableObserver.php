@@ -23,16 +23,14 @@ class TrackableObserver
         $this->track($model, 'deleted');
     }
 
+    public function restored(Model $model): void
+    {
+        $this->track($model, 'restored');
+    }
+
     protected function track(Model $model, string $event): void
     {
         if (! ActivityContext::enabled()) {
-            return;
-        }
-        if (! method_exists($model, 'shouldTrackEvent')) {
-            return;
-        }
-
-        if (! $model->shouldTrackEvent($event)) {
             return;
         }
 
