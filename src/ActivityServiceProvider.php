@@ -7,6 +7,7 @@ use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 use Spatie\LaravelPackageTools\Commands\InstallCommand;
 use Gottvergessen\Activity\Commands\ActivityInstallCommand;
+use Gottvergessen\Activity\Commands\ActivityPruneCommand;
 
 class ActivityServiceProvider extends PackageServiceProvider
 {
@@ -16,7 +17,10 @@ class ActivityServiceProvider extends PackageServiceProvider
             ->name('activity')
             ->hasConfigFile()
             ->hasMigration('create_logger_table')
-            ->hasCommand(ActivityInstallCommand::class);
+            ->hasCommands([
+                ActivityInstallCommand::class,
+                ActivityPruneCommand::class,
+            ]);
     }
 
    

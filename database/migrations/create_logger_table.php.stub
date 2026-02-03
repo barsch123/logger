@@ -22,9 +22,14 @@ return new class extends Migration
             $table->json('meta')->nullable();
             $table->string('batch_id', 36)->nullable();
             $table->timestamps();
+            
+            // Indexes for common queries
             $table->index(['subject_type', 'subject_id']);
             $table->index(['causer_type', 'causer_id']);
             $table->index(['event', 'created_at']);
+            $table->index('batch_id');
+            $table->index('log');
+            $table->index('created_at'); // For pruning
         });
         
     }

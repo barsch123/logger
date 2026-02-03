@@ -7,16 +7,18 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-        Schema::create('dummy_models', function (Blueprint $table) {
+        Schema::create('users', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('secret')->nullable();
+            $table->string('email')->unique();
+            $table->string('password');
+            $table->rememberToken();
             $table->timestamps();
-            $table->softDeletes();
         });
     }
 
-    public function down(){
-        Schema::dropIfExists('dummy_models');
+    public function down(): void
+    {
+        Schema::dropIfExists('users');
     }
 };
